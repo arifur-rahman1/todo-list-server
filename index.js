@@ -1,6 +1,7 @@
 const express = require('express')
 const cors = require('cors')
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const ObjectId = require('mongodb').ObjectId;
 const app = express()
 const port = process.env.PORT || 5000;
 
@@ -22,6 +23,7 @@ async function run() {
     try {
         await client.connect();
         const taskCollection = client.db('todoList').collection('task');
+        const completedTask = client.db('todoList').collection('complete');
 
         app.get('/task', async (req, res) => {
             const query = {};
@@ -38,7 +40,7 @@ async function run() {
             res.send(result);
         })
 
-        //Updet task
+        //Update task
         app.put('/task/:id', async (req, res) => {
             const id = req.params.id;
             const updatedTask = req.body;
@@ -58,6 +60,29 @@ async function run() {
         app.post('/task', async (req, res) => {
             const newTask = req.body;
             const result = await taskCollection.insertOne(newTask)
+            res.send(result);
+
+        })
+
+        // delete a user
+        app.delete('/task/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await taskCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        app.get('/complete', async (req, res) => {
+            const query = {};
+            const cursor = completedTask.find(query);
+            const tasks = await cursor.toArray();
+            res.send(tasks);
+        })
+
+        // post completed task 
+        app.post('/complete', async (req, res) => {
+            const newTask = req.body;
+            const result = await completedTask.insertOne(newTask)
             res.send(result);
 
         })
